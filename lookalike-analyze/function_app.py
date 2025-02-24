@@ -10,7 +10,7 @@ def get_recommended_exhibitors_for_visitor_email(req: func.HttpRequest) -> func.
     try:
         event_id = int(req.route_params.get("event_id"))
         min_scans = int(req.params.get("min_scans"))
-        apply_degradation = req.params.get("apply_degradation").lower() is "true"
+        apply_degradation = req.params.get("apply_degradation", "False").lower() is "true"
     except Exception as e:
         return func.HttpResponse(
             f"Invalid Request: {str(e)}",
