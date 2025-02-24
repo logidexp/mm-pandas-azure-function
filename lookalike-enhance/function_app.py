@@ -5,7 +5,7 @@ from core import enhanced_recommedation
 app = func.FunctionApp()
 
 @app.route(route="lookalike/{event_id}/exhibitors/{exhibitor_id}", auth_level=func.AuthLevel.ANONYMOUS)
-def get_recommended_exhibitors_for_visitor_email(req: func.HttpRequest) -> func.HttpResponse:
+def get_enhanced_recommendation_for_exhibitor(req: func.HttpRequest) -> func.HttpResponse:
 
     try:
         req_body = req.get_json()
