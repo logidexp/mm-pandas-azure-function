@@ -4,12 +4,12 @@ from core import analyze_event_lookalike
 
 app = func.FunctionApp()
 
-@app.route(route="lookalike/{event_id}/exhibitors", auth_level=func.AuthLevel.ANONYMOUS)
+@app.route(route="api/{event_id}", auth_level=func.AuthLevel.FUNCTION)
 def get_lead_scan_analyze_for_event(req: func.HttpRequest) -> func.HttpResponse:
 
     try:
         event_id = int(req.route_params.get("event_id"))
-        min_scans = int(req.params.get("min_scans"))
+        min_scans = int(req.params.get("min_scans", "10"))
         apply_degradation = req.params.get("apply_degradation", "False").lower() is "true"
     except Exception as e:
         return func.HttpResponse(
