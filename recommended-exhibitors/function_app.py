@@ -3,7 +3,7 @@ from core import recommended_exhibitors_for_visitor_email
 
 app = func.FunctionApp()
 
-@app.route(route="api", auth_level=func.AuthLevel.ANONYMOUS)
+@app.route(route="api", auth_level=func.AuthLevel.FUNCTION)
 def get_recommended_exhibitors_for_visitor_email(req: func.HttpRequest) -> func.HttpResponse:
     try:
         req_body = req.get_json()

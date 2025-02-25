@@ -4,7 +4,7 @@ from core import analyze_event_lookalike
 
 app = func.FunctionApp()
 
-@app.route(route="api/{event_id}", auth_level=func.AuthLevel.ANONYMOUS)
+@app.route(route="api/{event_id}", auth_level=func.AuthLevel.FUNCTION)
 def get_lead_scan_analyze_for_event(req: func.HttpRequest) -> func.HttpResponse:
 
     try:

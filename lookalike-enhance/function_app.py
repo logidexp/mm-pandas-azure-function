@@ -4,7 +4,7 @@ from core import enhanced_recommedation
 
 app = func.FunctionApp()
 
-@app.route(route="api/{event_id}/{exhibitor_id}", auth_level=func.AuthLevel.ANONYMOUS)
+@app.route(route="api/{event_id}/{exhibitor_id}", auth_level=func.AuthLevel.FUNCTION)
 def get_enhanced_recommendation_for_exhibitor(req: func.HttpRequest) -> func.HttpResponse:
 
     try:
