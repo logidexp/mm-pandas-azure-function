@@ -100,6 +100,7 @@ def get_exhibitor_details(event_id: int, exhibitor_list: List[int]):
     connection = connect_to_databricks()
     cursor = connection.cursor()
 
+    # Get exhibitor details
     exhibitor_ids = ", ".join(map(str, exhibitor_list))
     query = f"""
         SELECT * FROM dwh.mm.precomputed_exhibitors_details_{event_id}
@@ -109,7 +110,63 @@ def get_exhibitor_details(event_id: int, exhibitor_list: List[int]):
     column_names = [desc[0] for desc in cursor.description]
     exhibitor_details = cursor.fetchall()
     df_exhibitor_details = pd.DataFrame(exhibitor_details, columns=column_names)
-    df_exhibitor_details = df_exhibitor_details.iloc[:, 1:]
+    # df_exhibitor_details = df_exhibitor_details.iloc[:, 1:]
+
+    # Get exhibitor additional categories
+    query = f"""
+        SELECT ExhibitorID, category_id FROM dwh.mm.precomputed_exhibitors_additional_categories{event_id}
+        WHERE ExhibitorID IN ({exhibitor_ids})
+    """
+    cursor.execute(query)
+    additional_category = cursor.fetchall()
+    df_additional_category = pd.DataFrame(additional_category, columns=["ExhibitorID", "AdditionalCategories"])
+    df_additional_category = df_additional_category.groupby('ExhibitorID')['AdditionalCategories'].agg('|'.join).reset_index()
+
+    df_exhibitor_details = pd.merge(
+        df_exhibitor_details,
+        df_additional_category,
+        on="ExhibitorID",
+        how="left"
+    )
+
+    # Get exhibitor categories
+    query = f"""
+        SELECT ExhibitorID, category_id FROM dwh.mm.precomputed_exhibitors_{event_id}
+        WHERE ExhibitorID IN ({exhibitor_ids})
+    """
+    cursor.execute(query)
+    exhibitor_category = cursor.fetchall()
+    df_exhibitor_category = pd.DataFrame(exhibitor_category, columns=["ExhibitorID", "category_id"])
+    
+    category_list = list(set(df_exhibitor_category["category_id"].tolist()))
+    category_ids = ", ".join(map(str, category_list))
+    query = f"""
+        SELECT category_id, NameEn, NameRu FROM dwh.mm.precomputed_categories_{event_id}
+        WHERE category_id IN ({category_ids})
+    """
+    cursor.execute(query)
+    category_info = cursor.fetchall()
+    df_category_info = pd.DataFrame(category_info, columns=["category_id", "NameEn", "NameRu"])
+    df_category_info['category_id'] = df_category_info['category_id'].astype('str')
+
+    df_exhibitor_category = pd.merge(
+        df_exhibitor_category,
+        df_category_info,
+        on="category_id",
+        how="left"
+    )
+
+    df_exhibitor_category = df_exhibitor_category.groupby('ExhibitorID').apply(
+        lambda x: x[['NameEn', 'NameRu']].to_dict('records')
+    ).reset_index(name='categories')
+
+    df_exhibitor_details = pd.merge(
+        df_exhibitor_details,
+        df_exhibitor_category,
+        on="ExhibitorID",
+        how="left"
+    )
+
     return df_exhibitor_details
 
 
