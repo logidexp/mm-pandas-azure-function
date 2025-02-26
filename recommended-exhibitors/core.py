@@ -45,8 +45,7 @@ def get_weight_mapping_to_category(event: int):
 
 def get_event_exhibitors_with_category(
     event: int,
-    exclude: List = [],
-    region_filter:List[int] = []
+    exclude: List = []
 ):
     connection = connect_to_databricks()
     cursor = connection.cursor()
@@ -57,19 +56,6 @@ def get_event_exhibitors_with_category(
 
     df_exhibitor_category = pd.DataFrame(exhibitor_category, columns=["exhibitor_id", "category_id"])
     df_exhibitor_category = df_exhibitor_category[~df_exhibitor_category["exhibitor_id"].isin(exclude)]
-
-    if region_filter:
-        region_filter = [str(region) for region in region_filter]
-        query = f"SELECT ExhibitorID, category_id FROM dwh.mm.precomputed_exhibitors_additional_categories{event}"
-        cursor.execute(query)
-        exhibitor_region = cursor.fetchall()
-        df_exhibitor_region = pd.DataFrame(exhibitor_region, columns=["exhibitor_id", "region_id"])
-        df_exhibitor_region["region_id"] = df_exhibitor_region["region_id"]
-
-        exhibitors_in_regions = df_exhibitor_region[df_exhibitor_region["region_id"].isin(region_filter)]
-        exhibitors_in_regions = list(set(exhibitors_in_regions["exhibitor_id"].tolist()))
-
-        df_exhibitor_category = df_exhibitor_category[df_exhibitor_category["exhibitor_id"].isin(exhibitors_in_regions)]
 
     return df_exhibitor_category
 
@@ -94,6 +80,18 @@ def get_subregion_broader_mapping(event_id, region_filter: List[int]):
 
     available_regions = list(set(available_regions))
     return available_regions
+
+
+def get_exhibitor_regions(event_id: int):
+    connection = connect_to_databricks()
+    cursor = connection.cursor()
+
+    query = f"SELECT ExhibitorID, category_id FROM dwh.mm.precomputed_exhibitors_additional_categories{event_id}"
+    cursor.execute(query)
+    exhibitor_region = cursor.fetchall()
+    df_exhibitor_region = pd.DataFrame(exhibitor_region, columns=["exhibitor_id", "region_id"])
+
+    return df_exhibitor_region
 
 
 def get_exhibitor_details(event_id: int, exhibitor_list: List[int]):
@@ -181,11 +179,7 @@ def recommended_exhibitors_for_visitor_email(
     df_answers = get_answer_id_list_by_email(event, email)
     df_match_weights = get_weight_mapping_to_category(event)
 
-    if event == 534 and region_filter:
-        available_region = get_subregion_broader_mapping(event, region_filter)
-        df_exhibitor_category = get_event_exhibitors_with_category(event, exclude, available_region)
-    else:
-        df_exhibitor_category = get_event_exhibitors_with_category(event, exclude, [])
+    df_exhibitor_category = get_event_exhibitors_with_category(event, exclude)
 
     df_match_answer_weight = pd.merge(
         df_answers,
@@ -221,13 +215,29 @@ def recommended_exhibitors_for_visitor_email(
             how="left"
         )
         df_match_score["score"] = df_match_score["score"] / (1 + df_match_score["category_count"].apply(math.log))
-    
-    df_match_score = df_match_score.nlargest(max_count, "score")
+        
+    if event == 534 and region_filter:
+        available_region = get_subregion_broader_mapping(event, region_filter)
+        available_region = [str(region) for region in available_region]
+        df_exhibitor_region = get_exhibitor_regions(event)
+
+        exhibitors_in_regions = df_exhibitor_region[df_exhibitor_region["region_id"].isin(available_region)]
+        exhibitors_in_regions = list(set(exhibitors_in_regions["exhibitor_id"].tolist()))
+
+        df_exhibitor_in_region = df_match_score[df_match_score["exhibitor_id"].isin(exhibitors_in_regions)]
+        df_exhibitor_out_region = df_match_score[~df_match_score["exhibitor_id"].isin(exhibitors_in_regions)]
+
+        df_match_score = df_exhibitor_in_region.nlargest(max_count, "score")
+        count_in_region = len(df_exhibitor_in_region)
+        if max_count > count_in_region:
+            df_match_score = pd.concat([df_match_score, df_exhibitor_out_region.nlargest(max_count - count_in_region, "score")])
+    else:
+        df_match_score = df_match_score.nlargest(max_count, "score")
 
     final_exhibitors = df_match_score["exhibitor_id"].tolist()
-    exhibitor_deteails = get_exhibitor_details(event, final_exhibitors)
-    exhibitor_deteails["region_filter"] = "|".join([str(region) for region in region_filter])
-    exhibitor_deteails = exhibitor_deteails.to_dict("records")
+    exhibitor_details = get_exhibitor_details(event, final_exhibitors)
+    exhibitor_details["region_filter"] = "|".join([str(region) for region in region_filter])
+    exhibitor_details = exhibitor_details.to_dict("records")
 
     recommendations = []
     index = 0
@@ -235,7 +245,7 @@ def recommended_exhibitors_for_visitor_email(
         recommendations.append(
             ExhibitorRecommendation(
                 exhibitor_id = row["exhibitor_id"],
-                exhibitor_details = exhibitor_deteails[index],
+                exhibitor_details = exhibitor_details[index],
                 score = row["score"]
             )
         )
