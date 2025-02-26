@@ -26,18 +26,21 @@ def get_recommended_exhibitors_for_visitor_email(req: func.HttpRequest) -> func.
             status_code = 400
         )
 
+    exclude = [int(ex) for ex in exclude]
+    region_filter = [int(region) for region in region_filter]
+
     try:
         recommendations = recommended_exhibitors_for_visitor_email(
-            event=event,
+            event=int(event),
             email=email,
-            max_count=max_count,
+            max_count=int(max_count),
             exclude=exclude,
             apply_degradation=apply_degradation,
             region_filter=region_filter
         )
     except Exception as e:
         return func.HttpResponse(
-            "Failed to get recommendation",
+            f"Failed to get recommendation: {str(e)}",
             status_code=500,
         )
 
