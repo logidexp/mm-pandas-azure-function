@@ -172,9 +172,3 @@ def analyze_event_lookalike(
     }
 
     return result
-
-
-
-if __name__ == "__main__":
-    result = analyze_event_lookalike(527, 20, True)
-    print(result)

@@ -46,7 +46,7 @@ def get_weight_mapping_to_category(event: int):
     return df_match_weights
 
 
-def get_event_exhibitors_with_category(event: int, exclude: List = []):
+def get_event_exhibitors_with_category(event: int):
     connection = connect_to_databricks()
     cursor = connection.cursor()
 
@@ -54,7 +54,6 @@ def get_event_exhibitors_with_category(event: int, exclude: List = []):
     cursor.execute(query)
     exhibitor_category = cursor.fetchall()
     df_exhibitor_category = pd.DataFrame(exhibitor_category, columns=["exhibitor_id", "category_id"])
-    df_exhibitor_category = df_exhibitor_category[~df_exhibitor_category["exhibitor_id"].isin(exclude)]
 
     return df_exhibitor_category
 
@@ -79,7 +78,7 @@ def get_event_visitors_detail(event: int, exclude: List = []):
     cursor.execute(query)
     user_data = cursor.fetchall()
     df_user_data = pd.DataFrame(user_data, columns=["user_id", "user_email", "user_info", "user_answers", "region", "country"])
-    df_user_data = df_user_data[~df_user_data["user_id"].isin(exclude)]
+    df_user_data = df_user_data[~df_user_data["user_email"].isin(exclude)]
 
     return df_user_data
 
