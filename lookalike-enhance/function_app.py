@@ -17,7 +17,7 @@ def get_enhanced_recommendation_for_exhibitor(req: func.HttpRequest) -> func.Htt
 
     event_id = req_body.get("event")
     exhibitor_id = req_body.get("exhibitor_id")
-    min_scans = req_body.get("min_scans", 10)
+    min_scans = req_body.get("min_scans", "10")
     exclude = req_body.get("exclude", [])
     apply_degradation = req_body.get("apply_degradation", "false")
 
@@ -27,13 +27,20 @@ def get_enhanced_recommendation_for_exhibitor(req: func.HttpRequest) -> func.Htt
             status_code = 400
         )
 
-    enhanced_result = enhanced_recommedation(
-        event_id=event_id,
-        exhibitor_id=exhibitor_id,
-        min_scans=min_scans,
-        exclude=exclude,
-        apply_degradation=apply_degradation
-    )
+    try:
+        enhanced_result = enhanced_recommedation(
+            event_id=int(event_id),
+            exhibitor_id=int(exhibitor_id),
+            min_scans=int(min_scans),
+            exclude=exclude,
+            apply_degradation=apply_degradation
+        )
+    except Exception as e:
+        return func.HttpResponse(
+            f"Failed to get recommendation.",
+            status_code = 500
+        )
+
 
     return func.HttpResponse(
         json.dumps(enhanced_result),

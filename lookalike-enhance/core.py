@@ -194,7 +194,7 @@ def get_event_visitors_detail(event: int, exclude: list):
     cursor.execute(query)
     user_data = cursor.fetchall()
     df_user_data = pd.DataFrame(user_data, columns=["user_id", "user_email", "user_answers"])
-    df_user_data = df_user_data[~df_user_data["user_id"].isin(exclude)]
+    df_user_data = df_user_data[~df_user_data["user_email"].isin(exclude)]
 
     return df_user_data
 
@@ -253,8 +253,3 @@ def enhanced_recommedation(
         "enhanced": enhanced_recommended_visitors,
         "new_matches": enhancing_recommended_visitors
     }
-    
-
-if __name__ == "__main__":
-    result = enhanced_recommedation(527, 11615, 10)
-    print (result)

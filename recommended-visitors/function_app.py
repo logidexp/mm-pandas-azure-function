@@ -3,7 +3,7 @@ from core import recommended_visitors_for_exhibitor
 
 app = func.FunctionApp()
 
-@app.route(route="api", auth_level=func.AuthLevel.ANONYMOUS)
+@app.route(route="api", auth_level=func.AuthLevel.FUNCTION)
 def get_recommended_visitors_for_exhibitor(req: func.HttpRequest) -> func.HttpResponse:
     try:
         req_body = req.get_json()
@@ -26,7 +26,6 @@ def get_recommended_visitors_for_exhibitor(req: func.HttpRequest) -> func.HttpRe
             status_code = 400
         )
 
-    exclude = [int(ex) for ex in exclude]
     region_filter = [int(region) for region in region_filter]
 
     try:
@@ -40,13 +39,9 @@ def get_recommended_visitors_for_exhibitor(req: func.HttpRequest) -> func.HttpRe
         )
     except Exception as e:
         return func.HttpResponse(
-            f"Failed to get recommendation: {str(e)}",
+            f"Failed to get recommendation.",
             status_code=500,
         )
-
-    print("============ Recommended ===========")
-    print(recommendations)
-    print("====================================")
 
     return func.HttpResponse(
         recommendations.model_dump_json(),

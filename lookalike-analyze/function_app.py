@@ -16,7 +16,7 @@ def get_lead_scan_analyze_for_event(req: func.HttpRequest) -> func.HttpResponse:
         )
 
     event_id = req_body.get("event")
-    min_scans = req_body.get("min_scans", 10)
+    min_scans = req_body.get("min_scans", "10")
     apply_degradation = req_body.get("apply_degradation", "false")
 
     if not event_id:
@@ -27,13 +27,13 @@ def get_lead_scan_analyze_for_event(req: func.HttpRequest) -> func.HttpResponse:
 
     try:
         analyze_result = analyze_event_lookalike(
-            event_id=event_id,
-            min_scans=min_scans,
+            event_id=int(event_id),
+            min_scans=int(min_scans),
             apply_degradation=apply_degradation
         )
     except Exception as e:
         return func.HttpResponse(
-            f"Failed to get analyze infomation\n{str(e)}",
+            f"Failed to get analyze infomation.",
             status_code=500,
         )
 
