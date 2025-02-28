@@ -40,7 +40,7 @@ def get_recommended_exhibitors_for_visitor_email(req: func.HttpRequest) -> func.
         )
     except Exception as e:
         return func.HttpResponse(
-            f"Failed to get recommendation: {str(e)}",
+            f"Failed to get recommendation.",
             status_code=500,
         )
 

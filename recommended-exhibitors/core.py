@@ -86,7 +86,7 @@ def get_exhibitor_regions(event_id: int):
     connection = connect_to_databricks()
     cursor = connection.cursor()
 
-    query = f"SELECT ExhibitorID, category_id FROM dwh.mm.precomputed_exhibitors_additional_categories{event_id}"
+    query = f"SELECT ExhibitorID, category_id FROM dwh.mm.precomputed_exhibitors_additional_categories_{event_id}"
     cursor.execute(query)
     exhibitor_region = cursor.fetchall()
     df_exhibitor_region = pd.DataFrame(exhibitor_region, columns=["exhibitor_id", "region_id"])
@@ -112,12 +112,13 @@ def get_exhibitor_details(event_id: int, exhibitor_list: List[int]):
 
     # Get exhibitor additional categories
     query = f"""
-        SELECT ExhibitorID, category_id FROM dwh.mm.precomputed_exhibitors_additional_categories{event_id}
+        SELECT ExhibitorID, category_id FROM dwh.mm.precomputed_exhibitors_additional_categories_{event_id}
         WHERE ExhibitorID IN ({exhibitor_ids})
     """
     cursor.execute(query)
     additional_category = cursor.fetchall()
     df_additional_category = pd.DataFrame(additional_category, columns=["ExhibitorID", "AdditionalCategories"])
+    df_additional_category["AdditionalCategories"] = df_additional_category["AdditionalCategories"].astype(str)
     df_additional_category = df_additional_category.groupby('ExhibitorID')['AdditionalCategories'].agg('|'.join).reset_index()
 
     df_exhibitor_details = pd.merge(
@@ -218,7 +219,6 @@ def recommended_exhibitors_for_visitor_email(
         
     if event == 534 and region_filter:
         available_region = get_subregion_broader_mapping(event, region_filter)
-        available_region = [str(region) for region in available_region]
         df_exhibitor_region = get_exhibitor_regions(event)
 
         exhibitors_in_regions = df_exhibitor_region[df_exhibitor_region["region_id"].isin(available_region)]
