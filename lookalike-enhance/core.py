@@ -7,19 +7,15 @@ from databricks import sql
 load_dotenv()
 
 
-def connect_to_databricks():
-    connection = sql.connect(
-        server_hostname = os.environ.get("DATABRICKS_HOST"),
-        http_path = os.environ.get("DATABRICKS_HTTP_PATH"),
-        access_token = os.environ.get("DATABRICKS_TOKEN"),
-    )
-    return connection
+connection = sql.connect(
+    server_hostname = os.environ.get("DATABRICKS_HOST"),
+    http_path = os.environ.get("DATABRICKS_HTTP_PATH"),
+    access_token = os.environ.get("DATABRICKS_TOKEN"),
+)
+cursor = connection.cursor()
 
 
 def get_visitor_with_answers(event_id):
-    connection = connect_to_databricks()
-    cursor = connection.cursor()
-
     query = f"SELECT email, answer_ids FROM dwh.mm.precomputed_visitors_{event_id}"
     cursor.execute(query)
     answers = cursor.fetchall()
@@ -29,9 +25,6 @@ def get_visitor_with_answers(event_id):
 
 
 def get_weight_mapping_to_category(event_id: int):
-    connection = connect_to_databricks()
-    cursor = connection.cursor()
-
     query = f"SELECT category_id, answer, weight FROM dwh.mm.precomputed_mapping_{event_id}"
     cursor.execute(query)
     match_weights = cursor.fetchall()
@@ -41,9 +34,6 @@ def get_weight_mapping_to_category(event_id: int):
 
 
 def get_lead_scan_data(event_id: int, min_scans: int):
-    connection = connect_to_databricks()
-    cursor = connection.cursor()
-
     query = f"""
         SELECT VisitorEmail, ExhibitorCatalogueId
         FROM dwh.mm.precomputed_leadscan_{event_id}
@@ -60,9 +50,6 @@ def get_lead_scan_data(event_id: int, min_scans: int):
 
 
 def get_event_exhibitors_with_category(event: int, exhibitor_id: int):
-    connection = connect_to_databricks()
-    cursor = connection.cursor()
-
     query = f"SELECT category_id FROM dwh.mm.precomputed_exhibitors_{event} WHERE ExhibitorID = {exhibitor_id}"
     cursor.execute(query)
     exhibitor_category = cursor.fetchall()
@@ -72,9 +59,6 @@ def get_event_exhibitors_with_category(event: int, exhibitor_id: int):
 
 
 def get_weight_mapping_to_category(event: int):
-    connection = connect_to_databricks()
-    cursor = connection.cursor()
-
     query = f"SELECT category_id, answer, weight FROM dwh.mm.precomputed_mapping_{event}"
     cursor.execute(query)
     match_weights = cursor.fetchall()
@@ -84,9 +68,6 @@ def get_weight_mapping_to_category(event: int):
 
 
 def get_buying_probability_weight(event: int):
-    connection = connect_to_databricks()
-    cursor = connection.cursor()
-
     query = f"SELECT answer, weight FROM dwh.mm.precomputed_scoring_{event}"
     cursor.execute(query)
     buying_scores = cursor.fetchall()
@@ -187,9 +168,6 @@ def get_recommended_visitors(
 
 
 def get_event_visitors_detail(event: int, exclude: list):
-    connection = connect_to_databricks()
-    cursor = connection.cursor()
-
     query = f"SELECT wisent_user_id, email, answer_ids FROM dwh.mm.precomputed_visitors_{event}"
     cursor.execute(query)
     user_data = cursor.fetchall()

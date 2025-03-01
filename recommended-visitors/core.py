@@ -25,19 +25,15 @@ ANSWER_REGION_MAPPING = {
 }
 
 
-def connect_to_databricks():
-    connection = sql.connect(
-        server_hostname = os.environ.get("DATABRICKS_HOST"),
-        http_path = os.environ.get("DATABRICKS_HTTP_PATH"),
-        access_token = os.environ.get("DATABRICKS_TOKEN"),
-    )
-    return connection
+connection = sql.connect(
+    server_hostname = os.environ.get("DATABRICKS_HOST"),
+    http_path = os.environ.get("DATABRICKS_HTTP_PATH"),
+    access_token = os.environ.get("DATABRICKS_TOKEN"),
+)
+cursor = connection.cursor()
 
 
 def get_weight_mapping_to_category(event: int):
-    connection = connect_to_databricks()
-    cursor = connection.cursor()
-
     query = f"SELECT category_id, answer, weight FROM dwh.mm.precomputed_mapping_{event}"
     cursor.execute(query)
     match_weights = cursor.fetchall()
@@ -47,9 +43,6 @@ def get_weight_mapping_to_category(event: int):
 
 
 def get_event_exhibitors_with_category(event: int):
-    connection = connect_to_databricks()
-    cursor = connection.cursor()
-
     query = f"SELECT ExhibitorID, category_id FROM dwh.mm.precomputed_exhibitors_{event}"
     cursor.execute(query)
     exhibitor_category = cursor.fetchall()
@@ -59,9 +52,6 @@ def get_event_exhibitors_with_category(event: int):
 
 
 def get_buying_probability_weight(event: int):
-    connection = connect_to_databricks()
-    cursor = connection.cursor()
-
     query = f"SELECT answer, weight FROM dwh.mm.precomputed_scoring_{event}"
     cursor.execute(query)
     buying_scores = cursor.fetchall()
@@ -71,9 +61,6 @@ def get_buying_probability_weight(event: int):
 
 
 def get_event_visitors_detail(event: int, exclude: List = []):
-    connection = connect_to_databricks()
-    cursor = connection.cursor()
-
     query = f"SELECT wisent_user_id, email, user, answer_ids, Region, country FROM dwh.mm.precomputed_visitors_{event}"
     cursor.execute(query)
     user_data = cursor.fetchall()
@@ -84,9 +71,6 @@ def get_event_visitors_detail(event: int, exclude: List = []):
 
 
 def get_subregion_broader_mapping(event_id, region_filter: List[int]):
-    connection = connect_to_databricks()
-    cursor = connection.cursor()
-
     query = f"SELECT ItemID, ParentID FROM dwh.mm.precomputed_additional_categories_{event_id}"
     cursor.execute(query)
     region_mapping = cursor.fetchall()

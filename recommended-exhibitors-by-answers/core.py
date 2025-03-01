@@ -10,19 +10,15 @@ from schema import ExhibitorRecommendation, ExhibitorRecommendations
 load_dotenv()
 
 
-def connect_to_databricks():
-    connection = sql.connect(
-        server_hostname = os.environ.get("DATABRICKS_HOST"),
-        http_path = os.environ.get("DATABRICKS_HTTP_PATH"),
-        access_token = os.environ.get("DATABRICKS_TOKEN"),
-    )
-    return connection
+connection = sql.connect(
+    server_hostname = os.environ.get("DATABRICKS_HOST"),
+    http_path = os.environ.get("DATABRICKS_HTTP_PATH"),
+    access_token = os.environ.get("DATABRICKS_TOKEN"),
+)
+cursor = connection.cursor()
 
 
 def get_answer_id_list_by_email(event: int, email: str):
-    connection = connect_to_databricks()
-    cursor = connection.cursor()
-
     query = f"SELECT answer_ids FROM dwh.mm.precomputed_visitors_{event} WHERE email = '{email}'"
     cursor.execute(query)
     answers = cursor.fetchall()[0][0]
@@ -32,9 +28,6 @@ def get_answer_id_list_by_email(event: int, email: str):
 
 
 def get_weight_mapping_to_category(event: int):
-    connection = connect_to_databricks()
-    cursor = connection.cursor()
-
     query = f"SELECT category_id, answer, weight FROM dwh.mm.precomputed_mapping_{event}"
     cursor.execute(query)
     match_weights = cursor.fetchall()
@@ -47,9 +40,6 @@ def get_event_exhibitors_with_category(
     event: int,
     exclude: List = []
 ):
-    connection = connect_to_databricks()
-    cursor = connection.cursor()
-
     query = f"SELECT ExhibitorID, category_id FROM dwh.mm.precomputed_exhibitors_{event}"
     cursor.execute(query)
     exhibitor_category = cursor.fetchall()
@@ -61,9 +51,6 @@ def get_event_exhibitors_with_category(
 
 
 def get_subregion_broader_mapping(event_id, region_filter: List[int]):
-    connection = connect_to_databricks()
-    cursor = connection.cursor()
-
     query = f"SELECT ItemID, ParentID FROM dwh.mm.precomputed_additional_categories_{event_id}"
     cursor.execute(query)
     region_mapping = cursor.fetchall()
@@ -83,9 +70,6 @@ def get_subregion_broader_mapping(event_id, region_filter: List[int]):
 
 
 def get_exhibitor_regions(event_id: int):
-    connection = connect_to_databricks()
-    cursor = connection.cursor()
-
     query = f"SELECT ExhibitorID, category_id FROM dwh.mm.precomputed_exhibitors_additional_categories_{event_id}"
     cursor.execute(query)
     exhibitor_region = cursor.fetchall()
@@ -95,10 +79,6 @@ def get_exhibitor_regions(event_id: int):
 
 
 def get_exhibitor_details(event_id: int, exhibitor_list: List[int]):
-    connection = connect_to_databricks()
-    cursor = connection.cursor()
-
-    # Get exhibitor details
     exhibitor_ids = ", ".join(map(str, exhibitor_list))
     query = f"""
         SELECT * FROM dwh.mm.precomputed_exhibitors_details_{event_id}
@@ -108,9 +88,7 @@ def get_exhibitor_details(event_id: int, exhibitor_list: List[int]):
     column_names = [desc[0] for desc in cursor.description]
     exhibitor_details = cursor.fetchall()
     df_exhibitor_details = pd.DataFrame(exhibitor_details, columns=column_names)
-    # df_exhibitor_details = df_exhibitor_details.iloc[:, 1:]
 
-    # Get exhibitor additional categories
     query = f"""
         SELECT ExhibitorID, category_id FROM dwh.mm.precomputed_exhibitors_additional_categories_{event_id}
         WHERE ExhibitorID IN ({exhibitor_ids})
@@ -128,7 +106,6 @@ def get_exhibitor_details(event_id: int, exhibitor_list: List[int]):
         how="left"
     )
 
-    # Get exhibitor categories
     query = f"""
         SELECT ExhibitorID, category_id FROM dwh.mm.precomputed_exhibitors_{event_id}
         WHERE ExhibitorID IN ({exhibitor_ids})
