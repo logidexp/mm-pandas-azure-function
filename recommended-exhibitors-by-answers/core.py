@@ -28,6 +28,11 @@ def get_answer_id_list_by_email(event: int, email: str):
 
 
 def get_weight_mapping_to_category(event: int):
+    table_name = f"precomputed_mapping_{event}"
+    result = cursor.tables(catalog_name="dwh", schema_name="mm", table_name=table_name).fetchall()
+    if len(result) == 0:
+        raise ValueError("Event Not Found")
+
     query = f"SELECT category_id, answer, weight FROM dwh.mm.precomputed_mapping_{event}"
     cursor.execute(query)
     match_weights = cursor.fetchall()

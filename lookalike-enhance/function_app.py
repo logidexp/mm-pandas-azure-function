@@ -15,16 +15,22 @@ def get_enhanced_recommendation_for_exhibitor(req: func.HttpRequest) -> func.Htt
              status_code=400
         )
 
-    event_id = req_body.get("event")
-    exhibitor_id = req_body.get("exhibitor_id")
-    min_scans = req_body.get("min_scans", "10")
-    exclude = req_body.get("exclude", [])
-    apply_degradation = req_body.get("apply_degradation", "false")
+    try:
+        event_id = req_body.get("event")
+        exhibitor_id = req_body.get("exhibitor_id")
+        min_scans = req_body.get("min_scans", "10")
+        exclude = req_body.get("exclude", [])
+        apply_degradation = req_body.get("apply_degradation", "false")
+    except Exception as e:
+        return func.HttpResponse(
+            "Bad Request",
+            status_code = 400
+        )
 
     if not (event_id and exhibitor_id):
         return func.HttpResponse(
             "Missing parameters in request event_id and exhibitor_id are mandatory.",
-            status_code = 400
+            status_code = 422
         )
 
     try:
@@ -35,9 +41,14 @@ def get_enhanced_recommendation_for_exhibitor(req: func.HttpRequest) -> func.Htt
             exclude=exclude,
             apply_degradation=apply_degradation
         )
-    except Exception as e:
+    except ValueError as ve:
         return func.HttpResponse(
-            f"Failed to get recommendation.",
+            str(ve),
+            status_code=404,
+        )
+    except Exception as ee:
+        return func.HttpResponse(
+            f"Failed to get recommendation.{str(e)}",
             status_code = 500
         )
 

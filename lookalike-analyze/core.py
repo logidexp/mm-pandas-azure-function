@@ -34,6 +34,11 @@ def get_weight_mapping_to_category(event_id: int):
 
 
 def get_lead_scan_data(event_id: int, min_scans: int):
+    table_name = f"precomputed_leadscan_{event_id}"
+    result = cursor.tables(catalog_name="dwh", schema_name="mm", table_name=table_name).fetchall()
+    if len(result) == 0:
+        raise ValueError("Event Not Found")
+    
     query = f"""
         SELECT VisitorEmail, ExhibitorCatalogueId
         FROM dwh.mm.precomputed_leadscan_{event_id}
@@ -131,7 +136,7 @@ def get_analyze_info(
 
 def analyze_event_lookalike(
         event_id: int,
-        min_scans: int,
+        min_scans: int = 10,
         apply_degradation: bool = False 
     ):
 

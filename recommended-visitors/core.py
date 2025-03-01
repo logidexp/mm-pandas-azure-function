@@ -43,6 +43,11 @@ def get_weight_mapping_to_category(event: int):
 
 
 def get_event_exhibitors_with_category(event: int):
+    table_name = f"precomputed_exhibitors_{event}"
+    result = cursor.tables(catalog_name="dwh", schema_name="mm", table_name=table_name).fetchall()
+    if len(result) == 0:
+        raise ValueError("Event Not Found")
+
     query = f"SELECT ExhibitorID, category_id FROM dwh.mm.precomputed_exhibitors_{event}"
     cursor.execute(query)
     exhibitor_category = cursor.fetchall()
@@ -159,6 +164,9 @@ def recommended_visitors_for_exhibitor(
 ):
     df_exhibitor_category = get_event_exhibitors_with_category(event)
     category_id_list = df_exhibitor_category.loc[df_exhibitor_category["exhibitor_id"] == exhibitor, "category_id"].tolist()
+
+    if len(category_id_list) == 0:
+        raise ValueError("Exhibitor Not Found")
 
     df_match_weights = get_weight_mapping_to_category(event)
     df_match_weights = df_match_weights[df_match_weights["category_id"].isin(category_id_list)]

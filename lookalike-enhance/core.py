@@ -50,9 +50,18 @@ def get_lead_scan_data(event_id: int, min_scans: int):
 
 
 def get_event_exhibitors_with_category(event: int, exhibitor_id: int):
+    table_name = f"precomputed_leadscan_{event}"
+    result = cursor.tables(catalog_name="dwh", schema_name="mm", table_name=table_name).fetchall()
+    if len(result) == 0:
+        raise ValueError("Event Not Found")
+    
     query = f"SELECT category_id FROM dwh.mm.precomputed_exhibitors_{event} WHERE ExhibitorID = {exhibitor_id}"
     cursor.execute(query)
     exhibitor_category = cursor.fetchall()
+    
+    if len(exhibitor_category) == 0:
+        raise ValueError("Exhibitor Not Found")
+
     df_exhibitor_category = pd.DataFrame(exhibitor_category, columns=["category_id"])
 
     return df_exhibitor_category

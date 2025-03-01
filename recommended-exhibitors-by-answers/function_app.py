@@ -13,17 +13,23 @@ def get_recommended_exhibitors_by_answers(req: func.HttpRequest) -> func.HttpRes
              status_code=400
         )
 
-    event = req_body.get("event")
-    answers = req_body.get("answers")
-    max_count = req_body.get("max")
-    exclude = req_body.get("exclude", [])
-    apply_degradation = req_body.get("apply_degradation", "false")
-    region_filter = req_body.get("region_filter", [])
+    try:
+        event = req_body.get("event")
+        answers = req_body.get("answers")
+        max_count = req_body.get("max")
+        exclude = req_body.get("exclude", [])
+        apply_degradation = req_body.get("apply_degradation", "false")
+        region_filter = req_body.get("region_filter", [])
+    except Exception as e:
+        return func.HttpResponse(
+            "Bad Request",
+            status_code = 400
+        )
 
     if not (event and answers):
         return func.HttpResponse(
             "Missing parameters in request event and answer are mandatory.",
-            status_code = 400
+            status_code = 422
         )
 
     exclude = [int(ex) for ex in exclude]
@@ -38,9 +44,14 @@ def get_recommended_exhibitors_by_answers(req: func.HttpRequest) -> func.HttpRes
             apply_degradation=apply_degradation,
             region_filter=region_filter
         )
-    except Exception as e:
+    except ValueError as ve:
         return func.HttpResponse(
-            "Failed to get recommendation",
+            str(ve),
+            status_code=404,
+        )
+    except Exception as ee:
+        return func.HttpResponse(
+            f"Failed to get recommendation.\n{str(ee)}",
             status_code=500,
         )
 

@@ -19,9 +19,19 @@ cursor = connection.cursor()
 
 
 def get_answer_id_list_by_email(event: int, email: str):
+    table_name = f"precomputed_visitors_{event}"
+    result = cursor.tables(catalog_name="dwh", schema_name="mm", table_name=table_name).fetchall()
+    if len(result) == 0:
+        raise ValueError("Event Not Found")
+
     query = f"SELECT answer_ids FROM dwh.mm.precomputed_visitors_{event} WHERE email = '{email}'"
     cursor.execute(query)
-    answers = cursor.fetchall()[0][0]
+    result = cursor.fetchall()
+
+    if len(result) == 0:
+        raise ValueError("Email Not Found")
+    answers = result[0][0]
+
     df_answers = pd.DataFrame({"answerId": answers})
 
     return df_answers

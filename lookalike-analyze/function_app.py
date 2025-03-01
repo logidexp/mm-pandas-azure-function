@@ -15,14 +15,20 @@ def get_lead_scan_analyze_for_event(req: func.HttpRequest) -> func.HttpResponse:
              status_code=400
         )
 
-    event_id = req_body.get("event")
-    min_scans = req_body.get("min_scans", "10")
-    apply_degradation = req_body.get("apply_degradation", "false")
+    try:
+        event_id = req_body.get("event")
+        min_scans = req_body.get("min_scans", "10")
+        apply_degradation = req_body.get("apply_degradation", "false")
+    except Exception as e:
+        return func.HttpResponse(
+            "Bad Request",
+            status_code = 400
+        )
 
     if not event_id:
         return func.HttpResponse(
             "Missing parameters in request event_id is mandatory.",
-            status_code = 400
+            status_code = 422
         )
 
     try:
@@ -31,9 +37,14 @@ def get_lead_scan_analyze_for_event(req: func.HttpRequest) -> func.HttpResponse:
             min_scans=int(min_scans),
             apply_degradation=apply_degradation
         )
-    except Exception as e:
+    except ValueError as ve:
         return func.HttpResponse(
-            f"Failed to get analyze infomation.",
+            str(ve),
+            status_code=404,
+        )
+    except Exception as ee:
+        return func.HttpResponse(
+            f"Failed to get analyze infomation.{str(e)}",
             status_code=500,
         )
 
