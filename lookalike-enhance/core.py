@@ -232,8 +232,8 @@ def enhanced_recommedation(
     )
 
     origin_recommended_visitors = df_origin_recommended_visitors[["user_email", "total_score"]].to_records(index=False).tolist()
-    enhancing_recommended_visitors = df_origin_recommended_visitors[["user_email", "total_score"]].to_records(index=False).tolist()
-    enhanced_recommended_visitors = df_origin_recommended_visitors[["user_email", "total_score"]].to_records(index=False).tolist()
+    enhancing_recommended_visitors = df_enhancing_recommended_visitors[["user_email", "total_score"]].to_records(index=False).tolist()
+    enhanced_recommended_visitors = enhanced_recommended_visitors[["user_email", "total_score"]].to_records(index=False).tolist()
 
     return {
         "original": origin_recommended_visitors,
